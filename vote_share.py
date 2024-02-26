@@ -38,7 +38,7 @@ for index, precinct in enumerate(precinct_ls):
 
 for precinct, value in vote_share_dict.items():
   if (vote_share_dict[precinct]['yes'] + vote_share_dict[precinct]['no'] == 0):
-    vote_share_dict[precinct]['pct'] = 0
+    vote_share_dict[precinct]['pct'] = 'No Votes'
   else:
     vote_share_dict[precinct]['pct'] = vote_share_dict[precinct]['yes'] / (vote_share_dict[precinct]['yes'] + vote_share_dict[precinct]['no'])
 
@@ -57,7 +57,7 @@ for index in range(len(precincts_ls)):
   if precincts_ls[index] in vote_share_dict:
     vote_pct_ls.append(vote_share_dict[precincts_ls[index]]['pct'])
   else:
-    vote_pct_ls.append(0)
+    vote_pct_ls.append('Missing Precinct')
 
 parcels_df['JJJ-vote-pct'] = vote_pct_ls
 print(parcels_df.shape)
