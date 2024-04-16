@@ -13,7 +13,7 @@ folder_path_txt = "txt"
 
 
 #model config
-model_id = "openai/whisper-base"
+model_id = "openai/whisper-base" #WHERE TO CHANGE MODEL SIZE
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 
@@ -80,22 +80,16 @@ for filename in os.listdir(folder_path_audio):
                 print(f"Exporting {segment_wav_file_path}...", flush=True)
                 chunk.export(segment_wav_file_path, format="wav")
                 
-                print("Running inference")         
+                #Forward feed audio into Whisper model
+                print(f"Running inference on {filename}")          
                 text = pipe(segment_wav_file_path)
 
 
-                # Transcribe each segment
-                # with sr.AudioFile(segment_wav_file_path) as source:
-                #     audio_data = r.record(source)
-                #     try:
-                #         text = r.recognize_google(audio_data)
+                #write output to corresponding txt file
                 print(f"Transcription of {segment_wav_file_path}: Appending to {txt_file_path}", flush=True)
                 with open(txt_file_path, 'a') as text_file:
                     text_file.write(text["text"] + "\n")
-                #     except sr.UnknownValueError:
-                #         print(f"Google Speech Recognition could not understand part {i} of {filename}")
-                #     except sr.RequestError as e:
-                #         print(f"Could not request results from Google Speech Recognition service for part {i} of {filename}; {e}")
+
                 os.remove(segment_wav_file_path)
                 # os.remove(os.path.join(folder_path_audio, segment_wav_file_path))
 
@@ -105,25 +99,20 @@ for filename in os.listdir(folder_path_audio):
             wav_file_path = base_wav_file_path + ".wav"
             audio.export(wav_file_path, format="wav")
             
-            print("Running inference")         
+            #Forward feed audio into Whisper model
+            print(f"Running inference on {filename}")         
             text = pipe(wav_file_path)
-            # Transcribe the WAV file
-            # with sr.AudioFile(wav_file_path) as source:
-            #     audio_data = r.record(source)
-            #     try:
-            #         text = r.recognize_google(audio_data)
+            
+            #write output to corresponding txt file
             print(f"Transcription of {filename}: Saving to {txt_file_path}")
             with open(txt_file_path, 'w') as text_file:
                 text_file.write(text["text"])
                                    
-            #     except sr.UnknownValueError:
-            #         print(f"Google Speech Recognition could not understand {filename}")
-            #     except sr.RequestError as e:
-            #         print(f"Could not request results from Google Speech Recognition service for {filename}; {e}")
-            os.remove(os.path.join(folder_path_audio, wav_file_path))
+            os.remove(wav_file_path)
+            # os.remove(os.path.join(folder_path_audio, wav_file_path))
             print(f"Deleted {wav_file_path}")       
         
-        os.rename(mp3_file_path, mp3_done_file_path)
+            #os.rename(mp3_file_path, mp3_done_file_path)
 
 # # Optionally, delete the WAV files after transcription if they are no longer needed
 # for wav_filename in os.listdir(folder_path):
