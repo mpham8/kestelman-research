@@ -9,8 +9,8 @@ import aiohttp
 import asyncio
 
 
-directory_path = 'zimas_html_downloads_test/' #set file path to store html downloads
-async_requests_per_minute = 2500
+directory_path = 'zimas_html_downloads2/' #set file path to store html downloads
+async_requests_per_minute = 5
 
 cycle_proxies_ls = None
 
@@ -111,6 +111,7 @@ async def get_html_response(session, html_endpoint):
 
   print(f"Sent GET request to {html_endpoint} response using proxy {proxy}")
 
+
   async with session.get(html_endpoint) as response:
     return await response.text()
 
@@ -159,7 +160,7 @@ async def main():
 
   #get set of pins already downloaded
   pins_downloaded_set = get_pins_downloaded()
-  print("downloaded pins...")
+  print(f"downloaded {len(pins_downloaded_set)} pins...")
 
   #read in csv of all the apns, to keep track of which ones to get data from zimas for
   buildingpermits_pin_apn_df = pd.read_csv("buildingpermits_pin_apn.csv")
@@ -194,7 +195,8 @@ async def main():
           break
 
         pin = row['PIN_NBR']
-        if pin == False:
+        pin_parts = pin.split()
+        if len(pin_parts) != 2:
           continue
 
         if pin in pins_downloaded_set:
@@ -202,7 +204,7 @@ async def main():
 
         pins_ls.append(pin)
     
-
+    print(pins_ls)
     for pin in pins_ls:
       html_endpoint = make_html_endpoint(pin)
       endpoints_ls.append(html_endpoint)
@@ -233,7 +235,7 @@ async def main():
         html_response = await coro
         async_responses_ls.append(html_response)
         print(f"{counter} GET requests received")
-        countr += 1
+        counter += 1
 
 
     print(f"reformatting {async_requests_per_minute} HTML GET requests")
