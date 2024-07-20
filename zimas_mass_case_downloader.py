@@ -2,91 +2,147 @@ import requests
 import json
 import os
 import pandas as pd
-import urllib
 import time
+
+import pandas as pd
+import requests
+import time
+import itertools
+import os
 
 
 # Paths to the CSV file and the folder where extracted text files will be saved
-csv_path = "/Users/stephaniekestelman/Dropbox (Personal)/housing_supply/LA/minutes/case_numbers_meeting_minutes.csv"
-save_folder = "/Users/stephaniekestelman/Dropbox (Personal)/housing_supply/LA/entitlements/ents_minutes"
+csv_path = "case_numbers_meeting_minutes.csv"
+directory_path = "cases/"
+
+cycle_proxies_ls = None
 
 
-# Create a folder to save the extracted text files if it doesn't exist
-os.makedirs(save_folder, exist_ok=True)
+def get_cases_downloaded():
+  """
+  gets a set of the pins of files already downloaded (pin files in prescribed folder)
 
-# Read the case numbers from the CSV file
-case_numbers_df = pd.read_csv(csv_path)
-case_numbers = case_numbers_df['x'].tolist()
+  parameters:
+  none
 
+  returns
+  cases_downloaded_set (set) - set of all pins downloaded already
 
-# The API endpoint URL
-url1 = 'https://planning.lacity.gov/pdiscaseinfo/api/Service/SearchCaseNumber'
-url2 = 'https://planning.lacity.gov/pdiscaseinfo/api/Service/GetCaseInfoData'
+  """
+  cases_downloaded_set = set()
 
+  # Check if the directory exists
+  if os.path.exists(directory_path):
+    # Iterate over all files in the directory
+    for filename in os.listdir(directory_path):
+    # Extract the pin from the filename and add it to the set
+      case, _ = os.path.splitext(filename)  # pin is the filename without the extension
+      cases_downloaded_set.add(case)
 
-# If there are specific headers or parameters, include them here
-# In this example, I am not including any specific parameters
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
-    'Content-Type': 'application/json',
-    'Referer': 'https://planning.lacity.gov/pdiscaseinfo/search/',
-    'Origin': 'https://planning.lacity.gov',
-    'Accept': 'application/json, text/plain, */*',
-}
-
-# Use a session to handle cookies and maintain a session
-session = requests.Session()
-session.headers.update(headers)
+  return cases_downloaded_set
 
 
-for case_number in case_numbers:
-    file_path = os.path.join(save_folder, f"{case_number}_case_info.json")
-    # Check if the file already exists
-    if os.path.exists(file_path):
-        print(
-            f"File for case number {case_number} already exists. Skipping...")
-        continue
+def get_proxies():
+  """
+  scrapes website to get a list of usable proxies
 
-    # Step 1: Search for caseId using case_number
-    print(f"Searching for case number: {case_number}")
+  parameters:
+  none
 
-    # Step 1: Search for caseId using case_number
-    try:
-        with urllib.request.urlopen(f"{url1}?caseNo={case_number}") as response1:
-            response1_data = json.loads(response1.read().decode())
-    except Exception as e:
-        print(f"Error fetching case number {case_number}: {e}")
-        continue
+  returns:
+  (list) - list of 300 proxies
+  """
+  response = requests.get('https://free-proxy-list.net/') 
+  df = pd.read_html(response.text)[0]
+  proxies_ls = df['IP Address'].tolist()
 
-    # Debugging: print the response data
-    print(f"Response for case number {case_number}: {response1_data}")
+  return proxies_ls
 
-    # Check if the response contains the caseId
-    if isinstance(response1_data, list) and len(response1_data) > 0 and 'caseId' in response1_data[0]:
-        case_id = response1_data[0]['caseId']
 
-        # Wait for 1 minute before the next call
-        time.sleep(60)
+def get_response(endpoint, current_proxy):
+  """
+  sends GET request to recieve zimas data in json format
 
-        # Step 2: Get case info using caseId
-        try:
-            with urllib.request.urlopen(f"{url2}?caseId={case_id}") as response2:
-                case_info_data = json.loads(response2.read().decode())
-        except Exception as e:
-            print(f"Error fetching case info for case ID {case_id}: {e}")
+  parameters:
+  endpoint (str) - the endpoint to get json data
+  current_proxy (str) - proxy to use to make GET request
+
+  returns:
+  (str) - zimas data in json format in typed as a string
+  """
+  proxies = {
+   'http': 'http://' + current_proxy,
+  }
+  print(f"Recieved GET request response using proxy {proxies['http']}")
+  return requests.get(endpoint, proxies=proxies).json()
+
+
+
+def main():
+    #get set of pins already downloaded
+    cases_downloaded_set = get_cases_downloaded()
+    print(f"downloaded {len(cases_downloaded_set)} cases...")
+
+    # Read the case numbers from the CSV file
+    case_numbers_df = pd.read_csv(csv_path)
+    case_numbers = case_numbers_df['x'].tolist()
+
+    start_time = time.time()
+    interval = 600  # 10 minutes in seconds
+
+    proxies_ls = get_proxies()
+    global cycle_proxies_ls
+    cycle_proxies_ls = itertools.cycle(proxies_ls)
+
+    for case in case_numbers:
+        case_file_name = case + "_case_info"
+        full_case_file_name = directory_path + case_file_name + ".json"
+
+        if case_file_name in cases_downloaded_set:
             continue
+        
+        #get next set of 300 proxies every 10 minutes
+        current_time = time.time()
+        if current_time - start_time >= interval:
+            proxies_ls = get_proxies()
+            cycle_proxies_ls = itertools.cycle(proxies_ls)
+            start_time = current_time
+
+        # The API endpoint URL
+        endpoint1 = f"https://planning.lacity.gov/pdiscaseinfo/api/Service/SearchCaseNumber?caseNo={case}"
+        
+        print(f"Sent GET request to {endpoint1} to get case id...")
+
+        current_proxy = next(cycle_proxies_ls)
+        json_response = get_response(endpoint1, current_proxy)
+
+        # print(json_response)
+
+        if isinstance(json_response, list) and len(json_response) > 0 and 'caseId' in json_response[0]:
+            case_id = json_response[0]['caseId']
+            print("Case id found in json response")
+        else:
+            with open(full_case_file_name, 'w') as file:
+                case_info_data = " "
+                json.dump(case_info_data, file, indent=4)
+            continue
+        
+        print(f"Sent GET request to {endpoint1} to get case info...")
+        endpoint2 = f"https://planning.lacity.gov/pdiscaseinfo/api/Service/GetCaseInfoData?caseId={case_id}"
+        print(f"Sent GET request to {endpoint2}")
+        
+        current_proxy = next(cycle_proxies_ls)
+        json_response = get_response(endpoint2, current_proxy)
 
         # Save the case info data to a file
-        with open(file_path, 'w') as file:
-            json.dump(case_info_data, file, indent=4)
+        with open(full_case_file_name, 'w') as file:
+            json.dump(json_response, file, indent=4)
 
-        print(f"Data for case number {case_number} saved to {file_path}")
-    else:
-        print(f"No caseId found for case number {case_number}")
-        # Save the blank data to a file
-        with open(file_path, 'w') as file:
-            case_info_data = " "
-            json.dump(case_info_data, file, indent=4)
 
-    # Wait for 2 minutes before the next call
-    time.sleep(60)
+        print(f"Data for case number {case} saved to {directory_path}")
+
+
+
+if __name__ == "__main__":
+    main()
+
