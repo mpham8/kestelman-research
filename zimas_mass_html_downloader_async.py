@@ -10,7 +10,7 @@ import asyncio
 
 
 directory_path = 'zimas_html_downloads2/' #set file path to store html downloads
-async_requests_per_minute = 5
+async_requests_per_minute = 2500
 
 cycle_proxies_ls = None
 
@@ -111,7 +111,7 @@ async def get_html_response(session, html_endpoint):
 
   print(f"Sent GET request to {html_endpoint} response using proxy {proxy}")
 
-
+    #try using old proxy script here
   async with session.get(html_endpoint) as response:
     return await response.text()
 
@@ -158,9 +158,7 @@ def reformat_html_response(html_response):
 
 async def main():  
 
-  #get set of pins already downloaded
-  pins_downloaded_set = get_pins_downloaded()
-  print(f"downloaded {len(pins_downloaded_set)} pins...")
+
 
   #read in csv of all the apns, to keep track of which ones to get data from zimas for
   buildingpermits_pin_apn_df = pd.read_csv("buildingpermits_pin_apn.csv")
@@ -189,7 +187,12 @@ async def main():
     pins_ls = []
     endpoints_ls = []
     
+    #get set of pins already downloaded
+    pins_downloaded_set = get_pins_downloaded()
+    print(f"downloaded {len(pins_downloaded_set)} pins...")
+
     while len(pins_ls) < async_requests_per_minute:
+      
       for index, row in buildingpermits_pin_apn_df.iterrows():
         if len(pins_ls) >= async_requests_per_minute:
           break
@@ -254,7 +257,7 @@ async def main():
       with open(filename, "w") as file:
         file.write(html_response_reformatted)
 
-    print(f"saved {async_requests_per_minute} files to {directory_path}/")
+    print(f"saved {async_requests_per_minute} files to {directory_path}")
 
 
 
@@ -264,7 +267,7 @@ async def main():
     pins_ls = []
     endpoints_ls = []
 
-    time.sleep(45)
+    time.sleep(300)
 
 
 if __name__ == "__main__":
