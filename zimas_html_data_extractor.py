@@ -5,7 +5,8 @@ import numpy as np
 
 
 
-html_files_directory = "zimas_html_downloads_test/"
+html_files_directory = "zimas_html_downloads2/"
+html_data_directory = "zimas_html_data/"
 buildingpermits_data_path = "buildingpermits_data.csv"
 
 #create new columns (one time)
@@ -130,8 +131,7 @@ def main():
       # Read the content of the file
       html_response = file.read()
     
-    # if counter > 75:
-    #   break
+
 
 
     soup = BeautifulSoup(html_response, 'html.parser')
@@ -177,7 +177,7 @@ def main():
 
 
     print(f"apn {pin} processed...")
-    # buildingpermits_data_df.to_csv("buildingpermits_data.csv")
+    buildingpermits_data_df.to_csv("buildingpermits_data.csv")
     counter += 1
 
     if counter % 10 == 0:
@@ -185,5 +185,5 @@ def main():
       print(f"{counter} proccessed...")
       print("*"*30)
 
-
-main()
+if __name__ == "__main__":
+  main()
