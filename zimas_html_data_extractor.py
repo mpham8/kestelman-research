@@ -1,35 +1,10 @@
 from bs4 import BeautifulSoup
-import pandas as pd
 import os
-import numpy as np
 import csv
-
-
 
 
 html_files_directory = "zimas_html_downloads2/"
 html_data_directory = "zimas_html_data/"
-# buildingpermits_data_path = "buildingpermits_data.csv"
-
-#create new columns (one time)
-# buildingpermits_data_df["address"] = np.nan
-# buildingpermits_data_df["zip_code"] = np.nan
-# buildingpermits_data_df["pin_number"] = np.nan
-# buildingpermits_data_df["assessor_parcel_no"] = np.nan
-# buildingpermits_data_df["community_plan_area"] = np.nan
-# buildingpermits_data_df["area_planning_commission"] = np.nan
-# buildingpermits_data_df["neighborhood_council"] = np.nan
-# buildingpermits_data_df["census_tract"] = np.nan
-# buildingpermits_data_df["zoning"] = np.nan
-# buildingpermits_data_df["general_plan_land_use"] = np.nan
-# buildingpermits_data_df["hillside_area"] = np.nan
-# buildingpermits_data_df["apn_area"] = np.nan
-# buildingpermits_data_df["rent_stabilization_ordinance"] = np.nan
-# buildingpermits_data_df["ellis_act_property"] = np.nan
-# buildingpermits_data_df["tenant_protection_act"] = np.nan
-# buildingpermits_data_df["environmental_cases"] = np.nan
-# buildingpermits_data_df["city_planning_commission_cases"] = np.nan
-# buildingpermits_data_df["entered_data"] = 0
 
 
 def get_pins_downloaded(files_directory):
