@@ -93,7 +93,6 @@ def main():
 
   for pin in pins_downloaded_set:
     
-    pins_proccessed_set = get_pins_downloaded(html_data_directory)
     if pin not in pins_downloaded_set:
       continue
     if pin in pins_proccessed_set:
