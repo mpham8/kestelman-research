@@ -4,8 +4,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.keys import Keys
 from time import sleep
-from login import EMAIL
-from login import PASSWORD
+# from login import EMAIL
+# from login import PASSWORD
+from login import LINK
 from saved import DOWNLOADED_SET
 import re
 import requests
@@ -14,7 +15,7 @@ import os
 import csv
 
 #save data to this folder
-data_save_folder = "data"
+data_save_folder = "data-jan25run"
 
 
 def boot_and_login():
@@ -30,29 +31,33 @@ def boot_and_login():
     wait = WebDriverWait(driver, 10)
     driver.maximize_window()
 
-    driver.get("https://pro.urbanize.city/users/sign_in")
-
+    driver.get(LINK)
     wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
 
 
-    iframes = driver.find_elements(By.TAG_NAME, "iframe")
-    if iframes:
-        driver.switch_to.frame(iframes[0])
+    # driver.get("https://pro.urbanize.city/users/sign_in")
 
-    email_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "input[name='email'], input[type='email']")))
-    email_input.send_keys(EMAIL)
-
-    password_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "input[name='password'], input[type='password']")))
-    password_input.send_keys(PASSWORD)
-
-    login_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button.btn.prime[actionlogin]")))
-    login_button.click()
+    # wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
 
 
-    wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+    # iframes = driver.find_elements(By.TAG_NAME, "iframe")
+    # if iframes:
+    #     driver.switch_to.frame(iframes[0])
 
-    driver.switch_to.default_content()
-    wait.until(EC.visibility_of_element_located((By.XPATH, "//a[contains(@class, 'border-cyan-500') and contains(text(), 'Dashboard')]")))
+    # email_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "input[name='email'], input[type='email']")))
+    # email_input.send_keys(EMAIL)
+
+    # password_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "input[name='password'], input[type='password']")))
+    # password_input.send_keys(PASSWORD)
+
+    # login_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button.btn.prime[actionlogin]")))
+    # login_button.click()
+
+
+    # wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+
+    # driver.switch_to.default_content()
+    # wait.until(EC.visibility_of_element_located((By.XPATH, "//a[contains(@class, 'border-cyan-500') and contains(text(), 'Dashboard')]")))
 
 
     return driver, wait
@@ -195,6 +200,11 @@ def get_article_info(driver, wait, url, article_folder):
   except:
       article_subtitle = ""
 
+  #get article date
+  article_date = driver.find_element(By.CSS_SELECTOR, "div.article-byline").text.split('Comments')[0].strip()
+  article_date = article_date.split(',')[0] + ',' + article_date.split(',')[1]
+
+
   #get p in class="article-body"
   article_body_div = driver.find_element(By.CSS_SELECTOR, "div.article-body")
   paragraphs = article_body_div.find_elements(By.CSS_SELECTOR, "p:not(.image-and-caption)")
@@ -243,6 +253,7 @@ def get_article_info(driver, wait, url, article_folder):
 
   print("Article Title:", article_title)
   print("Article Subtitle:", article_subtitle)
+  print("Article Date", article_date)
   print("Article Body:", article_body)
   for i, image_url in enumerate(image_urls, 1):
     response = requests.get(image_url)
@@ -257,7 +268,7 @@ def get_article_info(driver, wait, url, article_folder):
       # display(Image(response.content))
   print("Comments:", comment_data)
     
-  return article_title, article_subtitle, article_body, image_urls, comment_data
+  return article_title, article_subtitle, article_date, article_body, image_urls, comment_data
 
 
 
@@ -336,12 +347,13 @@ def get_project_data(driver, wait, url):
         article_folder = os.path.join(data_save_folder, project_id, "articles", article_id)
         os.makedirs(article_folder, exist_ok=True)
         
-        article_title, article_subtitle, article_body, image_urls, comment_data = get_article_info(driver, wait, article_url, article_folder)
+        article_title, article_subtitle, article_date, article_body, image_urls, comment_data = get_article_info(driver, wait, article_url, article_folder)
 
         article_csv_filename = os.path.join(article_folder, f"articleinfo.csv")
         article_info = {
             'title': article_title,
             'subtitle': article_subtitle,
+            'date': article_date,
             'body': article_body
         }
         with open(article_csv_filename, 'w', newline='', encoding='utf-8') as csvfile:
@@ -362,7 +374,7 @@ def get_project_data(driver, wait, url):
 
 def main():
   driver, wait = boot_and_login()
-  page_number = 380
+  page_number = 1
   seen_all = False
 
 
