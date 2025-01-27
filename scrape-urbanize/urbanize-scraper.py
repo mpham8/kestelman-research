@@ -13,14 +13,19 @@ from IPython.display import Image, display
 import os
 import csv
 
-
-
+#save data to this folder
 data_save_folder = "data"
 
 
-# login
 def boot_and_login():
-
+    """
+    boot selenium driver and login
+    params:
+        none
+    return:
+        driver (selenium driver)
+        wait (selenium wait)
+    """
     driver = webdriver.Firefox()
     wait = WebDriverWait(driver, 10)
     driver.maximize_window()
@@ -52,12 +57,18 @@ def boot_and_login():
 
     return driver, wait
 
-driver, wait = boot_and_login()
-
-
 
 
 def get_project_info(driver, wait, url):
+  """
+  get project data for individual project
+  params:
+    driver
+    wait
+    url (str) - project page url
+  return:
+    project_info_dict (dictionary) - hashmap with project info
+  """
   driver.get(url)
 
   #get project name
@@ -138,6 +149,20 @@ def get_project_info(driver, wait, url):
 
 
 def get_article_info(driver, wait, url, article_folder):
+  """
+  get article data for individual article
+  params:
+    driver (selenium driver)
+    wait (selenium wait)
+    url (str) - article page url
+    article_folder (str) - folder location to save article data
+  return:
+    article_title (str) - article title
+    article_subtitle (str) - article subtitle
+    article_body (str) - article body
+    image_urls (list) - list of image urls
+    comment_data (dict) - hashmap with comment data
+  """
   driver.get(url)
 
   wait.until(EC.presence_of_element_located((By.CLASS_NAME, "article-lead-image")))
@@ -165,7 +190,10 @@ def get_article_info(driver, wait, url, article_folder):
   article_title = driver.find_element(By.CSS_SELECTOR, "h1.article-title").text
 
   #get h2 class = " article-subtitle"
-  article_subtitle = driver.find_element(By.CSS_SELECTOR, "h2.article-subtitle").text
+  try:
+      article_subtitle = driver.find_element(By.CSS_SELECTOR, "h2.article-subtitle").text
+  except:
+      article_subtitle = ""
 
   #get p in class="article-body"
   article_body_div = driver.find_element(By.CSS_SELECTOR, "div.article-body")
@@ -200,7 +228,6 @@ def get_article_info(driver, wait, url, article_folder):
         parent_link = comment.find_elements(By.CSS_SELECTOR, "a.parent-link")
         parent_id = parent_link[0].get_attribute("href").split("#")[-1] if parent_link else None
         
-        # Store comment data
         comment_data.append({
             "id": comment_id,
             "author": author,
@@ -235,14 +262,28 @@ def get_article_info(driver, wait, url, article_folder):
 
 
 def get_page_project_urls(driver):
+  """
+  get project urls for each page under "projects"
+  params:
+    driver (selenium driver)
+  return:
+    page_urls (list) - list of project urls
+  """
   project_links = driver.find_elements(By.CSS_SELECTOR, "ul.grid a[href^='/los_angeles/projects/']")
   page_urls = [link.get_attribute('href') for link in project_links]
 
   return page_urls
 
 def get_project_data(driver, wait, url):
-  
-
+  """
+  get project data, all articles and comments for individual project, then saves data to csv
+  params:
+    driver (selenium driver)
+    wait (selenium wait)
+    url (str) - project page url
+  return:
+    none
+  """
   driver.get(url)
 
   # Extract the last two parts of the URL
@@ -286,7 +327,7 @@ def get_project_data(driver, wait, url):
   if grid_exists:
       grid_links = driver.find_elements(By.CSS_SELECTOR, "ul.grid li a")
       grid_urls = [link.get_attribute('href') for link in grid_links]
-      project_data[url]['grid_urls'] = grid_urls
+      # project_data[url]['grid_urls'] = grid_urls
       for article_url in grid_urls:
          #get article data(article url)
 
@@ -321,7 +362,7 @@ def get_project_data(driver, wait, url):
 
 def main():
   driver, wait = boot_and_login()
-  page_number = 0
+  page_number = 380
   seen_all = False
 
 
