@@ -374,11 +374,21 @@ def get_project_data(driver, wait, url):
 
 def main():
   driver, wait = boot_and_login()
-  page_number = 1
+  page_number = 0
   seen_all = False
 
 
   downloaded_set = DOWNLOADED_SET
+
+  driver.get("https://pro.urbanize.city/los_angeles/projects")
+
+  # click the login button
+  login_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button.rounded-full.bg-cyan-600[data-action='click->login#login']")))
+  login_button.click()
+
+  # Wait for 5 seconds after clicking
+  sleep(5)
+
 
   while seen_all == False:
     #go to next page
