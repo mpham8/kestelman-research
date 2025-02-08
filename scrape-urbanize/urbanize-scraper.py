@@ -6,19 +6,21 @@ from selenium.webdriver.common.keys import Keys
 from time import sleep
 # from login import EMAIL
 # from login import PASSWORD
-from login import LINK
-from saved import DOWNLOADED_SET
+# from login import LINK
+from savedfeb25 import DOWNLOADED_SET
 import re
 import requests
 from IPython.display import Image, display
 import os
 import csv
+import sys
+
 
 #save data to this folder
-data_save_folder = "data-jan25run"
+data_save_folder = "data-feb25run"
 
 
-def boot_and_login():
+def boot_and_login(LINK):
     """
     boot selenium driver and login
     params:
@@ -373,18 +375,29 @@ def get_project_data(driver, wait, url):
 
 
 def main():
-  driver, wait = boot_and_login()
-  page_number = 0
+  # page_number = 176
   seen_all = False
+
+  # Get command line arguments  
+  if len(sys.argv) == 3:
+      LINK = sys.argv[1]
+      page_number = int(sys.argv[2])
+  elif len(sys.argv) == 2:
+      LINK = sys.argv[1]
+      page_number = 0
+
+  print(LINK)
+
+  driver, wait = boot_and_login(LINK)
 
 
   downloaded_set = DOWNLOADED_SET
 
   driver.get("https://pro.urbanize.city/los_angeles/projects")
 
-  # click the login button
-  login_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button.rounded-full.bg-cyan-600[data-action='click->login#login']")))
-  login_button.click()
+  # # # click the login button
+  # login_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button.rounded-full.bg-cyan-600[data-action='click->login#login']")))
+  # login_button.click()
 
   # Wait for 5 seconds after clicking
   sleep(5)
@@ -415,7 +428,7 @@ def main():
       downloaded_set.add(url)
 
       # Write the updated downloaded set to the downloaded.py file
-      with open('saved.py', 'w') as f:
+      with open('savedfeb25.py', 'w') as f:
           f.write(f"DOWNLOADED_SET = {repr(downloaded_set)}\n")
 
 
