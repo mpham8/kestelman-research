@@ -14,9 +14,8 @@ class PanoramaGroupFinder:
     
     def find_nearby(self, lat, lon, lats_ls, lons_ls, panoid_ls):
       panos = search_panoramas(lat=lat, lon=lon)
-      len(panos)
 
-      for pano in panos:
+      for pano in panos[:100]:
           lats_ls.append(pano.lat)
           lons_ls.append(pano.lon)
           panoid_ls.append(pano.pano_id)
